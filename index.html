@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ideeën Vault">
+<meta name="theme-color" content="#0f1115">
+<title>Ideeën Vault</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+:root{
+  --bg:#0f1115; --card:#181b22; --card2:#20242d; --line:#2a2f3a;
+  --text:#eef0f4; --muted:#8b93a3; --accent:#f5c542; --accent2:#ffdd73;
+  --red:#ff5d5d; --green:#3ecf8e; --blue:#4da3ff;
+  --r:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;}
+body{padding:env(safe-area-inset-top) 0 calc(90px + env(safe-area-inset-bottom));min-height:100vh}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px}
+
+/* header */
+header{padding:18px 0 10px;display:flex;align-items:center;gap:12px}
+.logo{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:24px;
+  background:linear-gradient(135deg,#f5c542,#ff8a3d);box-shadow:0 6px 20px rgba(245,197,66,.25)}
+header h1{margin:0;font-size:24px;letter-spacing:-.3px}
+header p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.hbtn{margin-left:auto;width:40px;height:40px;border-radius:12px;background:var(--card);font-size:18px}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:6px 0 14px}
+.stat{background:var(--card);border-radius:14px;padding:10px 6px;text-align:center}
+.stat b{display:block;font-size:20px}
+.stat span{font-size:11px;color:var(--muted)}
+
+/* search + filters */
+.search{display:flex;gap:8px;margin-bottom:10px}
+.search input{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;outline:none}
+.search input:focus{border-color:var(--accent)}
+.search select{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0 10px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;padding:8px 12px;border-radius:999px;background:var(--card);font-size:13px;border:1px solid var(--line);white-space:nowrap}
+.chip.on{background:var(--accent);color:#1a1a1a;border-color:var(--accent);font-weight:600}
+
+/* list */
+.list{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.idea{background:var(--card);border-radius:var(--r);padding:14px;border-left:4px solid var(--c,#666);position:relative}
+.idea h3{margin:0 34px 4px 0;font-size:16px;line-height:1.3}
+.idea p{margin:0;color:var(--muted);font-size:14px;line-height:1.4;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}
+.tag{font-size:11px;padding:3px 8px;border-radius:999px;background:var(--card2);color:#c9cfdb}
+.stars{color:var(--accent);font-size:12px;letter-spacing:1px;margin-left:auto}
+.fav{position:absolute;top:10px;right:10px;font-size:20px;opacity:.35}
+.fav.on{opacity:1}
+.prog{height:4px;background:var(--card2);border-radius:4px;margin-top:10px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--green)}
+.empty{text-align:center;color:var(--muted);padding:50px 20px}
+.empty div{font-size:46px;margin-bottom:8px}
+
+/* bottom bar */
+.bar{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+  background:linear-gradient(transparent,var(--bg) 35%);display:flex;justify-content:center;gap:10px}
+.add{background:var(--accent);color:#1a1a1a;font-weight:700;padding:15px 26px;border-radius:999px;font-size:16px;
+  box-shadow:0 8px 24px rgba(245,197,66,.3)}
+.rnd{background:var(--card2);padding:15px 18px;border-radius:999px;font-size:16px}
+
+/* sheet */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:10}
+.overlay.show{display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:92vh;overflow-y:auto;background:var(--card);
+  border-radius:22px 22px 0 0;padding:8px 16px calc(20px + env(safe-area-inset-bottom));z-index:11;
+  transform:translateY(105%);transition:transform .25s ease}
+.sheet.show{transform:none}
+.sheet .in{max-width:640px;margin:0 auto}
+.grab{width:40px;height:5px;border-radius:5px;background:var(--line);margin:4px auto 12px}
+.sheet h2{margin:0 0 12px;font-size:20px}
+label{display:block;font-size:12px;color:var(--muted);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.5px}
+.field{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;outline:none}
+.field:focus{border-color:var(--accent)}
+textarea.field{min-height:90px;resize:vertical}
+.pick{display:flex;flex-wrap:wrap;gap:8px}
+.pick button{padding:8px 12px;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-size:14px}
+.pick button.on{border-color:var(--accent);background:rgba(245,197,66,.12)}
+.starpick button{font-size:28px;color:var(--line);padding:0 2px}
+.starpick button.on{color:var(--accent)}
+.row{display:flex;gap:10px;margin-top:20px}
+.btn{flex:1;padding:14px;border-radius:14px;background:var(--card2);font-weight:600}
+.btn.pri{background:var(--accent);color:#1a1a1a}
+.btn.del{background:rgba(255,93,93,.15);color:var(--red);flex:0 0 auto;padding:14px 16px}
+
+/* detail */
+.dhead{display:flex;align-items:flex-start;gap:10px}
+.dhead h2{flex:1;margin:0;font-size:22px;line-height:1.25}
+.dtext{white-space:pre-wrap;line-height:1.5;color:#d6dae3;margin:12px 0 0}
+.steps{display:flex;flex-direction:column;gap:6px}
+.step{display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:12px;padding:10px 12px}
+.step input{width:20px;height:20px;accent-color:var(--green)}
+.step span{flex:1}
+.step.done span{text-decoration:line-through;color:var(--muted)}
+.step button{color:var(--muted);font-size:18px}
+.addstep{display:flex;gap:8px;margin-top:8px}
+.addstep button{background:var(--card2);border-radius:12px;padding:0 16px;font-weight:600}
+.small{font-size:12px;color:var(--muted);margin-top:16px}
+.toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top));transform:translateX(-50%) translateY(-120px);
+  background:var(--card2);padding:10px 16px;border-radius:12px;z-index:20;transition:transform .25s;font-size:14px}
+.toast.show{transform:translateX(-50%)}
+.menu button{display:block;width:100%;text-align:left;padding:14px;border-radius:12px;background:var(--bg);margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">💡</div>
+    <div>
+      <h1>Ideeën Vault</h1>
+      <p id="sub">Al je ideeën veilig op één plek</p>
+    </div>
+    <button class="hbtn" id="menuBtn" aria-label="Menu">⚙️</button>
+  </header>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="search">
+    <input id="q" type="search" placeholder="🔍 Zoek in je ideeën…">
+    <select id="sort" aria-label="Sorteren">
+      <option value="new">Nieuwst</option>
+      <option value="best">Beste</option>
+      <option value="az">A–Z</option>
+      <option value="old">Oudst</option>
+    </select>
+  </div>
+  <div class="chips" id="statusChips"></div>
+  <div class="chips" id="catChips"></div>
+
+  <div class="list" id="list"></div>
+</div>
+
+<div class="bar">
+  <button class="rnd" id="rndBtn" title="Verras me">🎲</button>
+  <button class="add" id="addBtn">＋ Nieuw idee</button>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="sheet" id="sheet"><div class="in" id="sheetIn"></div></div>
+<div class="toast" id="toast"></div>
+<input type="file" id="importFile" accept=".json,application/json" hidden>
+
+<script>
+const KEY = 'ideeenVault_v1';
+const CATS = [
+  {id:'app',     n:'App',          e:'📱', c:'#4da3ff'},
+  {id:'product', n:'Product',      e:'📦', c:'#ff8a3d'},
+  {id:'geld',    n:'Geld/Bedrijf', e:'💰', c:'#3ecf8e'},
+  {id:'voetbal', n:'Voetbal',      e:'⚽', c:'#7ddc4a'},
+  {id:'ai',      n:'AI',           e:'🤖', c:'#b48cff'},
+  {id:'leren',   n:'Leren',        e:'📚', c:'#ffd166'},
+  {id:'creatief',n:'Creatief',     e:'🎨', c:'#ff6fb1'},
+  {id:'techniek',n:'Techniek',     e:'🔧', c:'#5ad1d1'},
+  {id:'reizen',  n:'Reizen/Doen',  e:'🌍', c:'#f5c542'},
+  {id:'overig',  n:'Overig',       e:'✨', c:'#9aa3b5'}
+];
+const STATUS = [
+  {id:'idee',     n:'Idee',       e:'💡'},
+  {id:'bezig',    n:'Bezig',      e:'🔨'},
+  {id:'klaar',    n:'Gedaan',     e:'✅'},
+  {id:'geparkeerd',n:'Geparkeerd',e:'🅿️'}
+];
+const cat = id => CATS.find(c=>c.id===id) || CATS[CATS.length-1];
+const st  = id => STATUS.find(s=>s.id===id) || STATUS[0];
+
+let ideas = load();
+let fStatus = 'all', fCat = 'all', fFav = false;
+
+function load(){
+  try{ const d = JSON.parse(localStorage.getItem(KEY)); return Array.isArray(d)?d:[]; }
+  catch(e){ return []; }
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(ideas)); }
+  catch(e){ toast('⚠️ Opslaan lukte niet'); }
+}
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc = s => String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const $ = id => document.getElementById(id);
+function toast(t){ const el=$('toast'); el.textContent=t; el.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('show'),1800); }
+function fmtDate(ts){ return new Date(ts).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}); }
+
+/* ---------- render ---------- */
+function render(){
+  // stats
+  const cnt = s => ideas.filter(i=>i.status===s).length;
+  $('stats').innerHTML = `
+    <div class="stat"><b>${ideas.length}</b><span>Totaal</span></div>
+    <div class="stat"><b>${cnt('idee')}</b><span>💡 Idee</span></div>
+    <div class="stat"><b>${cnt('bezig')}</b><span>🔨 Bezig</span></div>
+    <div class="stat"><b>${cnt('klaar')}</b><span>✅ Gedaan</span></div>`;
+
+  // chips
+  $('statusChips').innerHTML =
+    chip('all','Alles',fStatus==='all','s') +
+    `<button class="chip ${fFav?'on':''}" data-fav="1">⭐ Favorieten</button>` +
+    STATUS.map(s=>chip(s.id,`${s.e} ${s.n}`,fStatus===s.id,'s')).join('');
+  $('catChips').innerHTML =
+    chip('all','Alle categorieën',fCat==='all','c') +
+    CATS.map(c=>chip(c.id,`${c.e} ${c.n}`,fCat===c.id,'c')).join('');
+
+  // filter
+  const q = $('q').value.trim().toLowerCase();
+  let list = ideas.filter(i =>
+    (fStatus==='all'||i.status===fStatus) &&
+    (fCat==='all'||i.cat===fCat) &&
+    (!fFav||i.fav) &&
+    (!q || (i.title+' '+i.text+' '+(i.tags||[]).join(' ')+' '+(i.steps||[]).map(s=>s.t).join(' ')).toLowerCase().includes(q))
+  );
+  const so = $('sort').value;
+  list.sort((a,b)=>
+    so==='new'? b.created-a.created :
+    so==='old'? a.created-b.created :
+    so==='az' ? a.title.localeCompare(b.title,'nl') :
+    (b.fav-a.fav) || (b.rating-a.rating) || (b.created-a.created));
+
+  if(!ideas.length){
+    $('list').innerHTML = `<div class="empty"><div>🔐</div><b>Je vault is nog leeg</b><br>Tik op <b>＋ Nieuw idee</b> en zet je eerste idee erin.</div>`;
+    return;
+  }
+  if(!list.length){
+    $('list').innerHTML = `<div class="empty"><div>🔎</div>Geen ideeën gevonden met deze filters.</div>`;
+    return;
+  }
+  $('list').innerHTML = list.map(i=>{
+    const c = cat(i.cat), s = st(i.status);
+    const steps = i.steps||[], done = steps.filter(x=>x.d).length;
+    return `<div class="idea" style="--c:${c.c}" data-open="${i.id}">
+      <button class="fav ${i.fav?'on':''}" data-favid="${i.id}" aria-label="Favoriet">⭐</button>
+      <h3>${esc(i.title)}</h3>
+      ${i.text?`<p>${esc(i.text)}</p>`:''}
+      <div class="meta">
+        <span class="tag">${c.e} ${c.n}</span>
+        <span class="tag">${s.e} ${s.n}</span>
+        ${(i.tags||[]).slice(0,3).map(t=>`<span class="tag">#${esc(t)}</span>`).join('')}
+        ${i.rating?`<span class="stars">${'★'.repeat(i.rating)}</span>`:''}
+      </div>
+      ${steps.length?`<div class="prog"><i style="width:${Math.round(done/steps.length*100)}%"></i></div>`:''}
+    </div>`;
+  }).join('');
+}
+function chip(id,label,on,type){ return `<button class="chip ${on?'on':''}" data-${type}="${id}">${label}</button>`; }
+
+/* ---------- sheet ---------- */
+function openSheet(html){ $('sheetIn').innerHTML = '<div class="grab"></div>'+html; $('overlay').classList.add('show'); $('sheet').classList.add('show'); $('sheet').scrollTop=0; }
+function closeSheet(){ $('overlay').classList.remove('show'); $('sheet').classList.remove('show'); render(); }
+$('overlay').onclick = closeSheet;
+
+/* add / edit form */
+function openForm(id){
+  const i = id ? ideas.find(x=>x.id===id) : {title:'',text:'',cat:fCat!=='all'?fCat:'app',status:'idee',rating:0,tags:[],steps:[],fav:false};
+  let fc = i.cat, fs = i.status, fr = i.rating||0;
+  openSheet(`
+    <h2>${id?'✏️ Idee bewerken':'💡 Nieuw idee'}</h2>
+    <label>Titel</label>
+    <input class="field" id="fTitle" maxlength="120" placeholder="Wat is je idee in één zin?" value="${esc(i.title)}">
+    <label>Uitleg</label>
+    <textarea class="field" id="fText" placeholder="Hoe werkt het? Voor wie? Waarom is het goed?">${esc(i.text)}</textarea>
+    <label>Categorie</label>
+    <div class="pick" id="fCat">${CATS.map(c=>`<button data-v="${c.id}" class="${c.id===fc?'on':''}">${c.e} ${c.n}</button>`).join('')}</div>
+    <label>Status</label>
+    <div class="pick" id="fStatus">${STATUS.map(s=>`<button data-v="${s.id}" class="${s.id===fs?'on':''}">${s.e} ${s.n}</button>`).join('')}</div>
+    <label>Hoe goed is dit idee?</label>
+    <div class="pick starpick" id="fRate">${[1,2,3,4,5].map(n=>`<button data-v="${n}" class="${n<=fr?'on':''}">★</button>`).join('')}</div>
+    <label>Tags (met komma's)</label>
+    <input class="field" id="fTags" placeholder="bijv. school, github, later" value="${esc((i.tags||[]).join(', '))}">
+    <div class="row">
+      <button class="btn" id="fCancel">Annuleren</button>
+      <button class="btn pri" id="fSave">${id?'Opslaan':'In de vault 🔐'}</button>
+    </div>`);
+  const pick = (box,cb)=> $(box).onclick = e=>{ const b=e.target.closest('button'); if(!b)return;
+    [...$(box).children].forEach(x=>x.classList.remove('on')); b.classList.add('on'); cb(b.dataset.v); };
+  pick('fCat',v=>fc=v); pick('fStatus',v=>fs=v);
+  $('fRate').onclick = e=>{ const b=e.target.closest('button'); if(!b)return;
+    const n=+b.dataset.v; fr = (fr===n)?0:n;
+    [...$('fRate').children].forEach((x,k)=>x.classList.toggle('on',k<fr)); };
+  $('fCancel').onclick = ()=> id ? openDetail(id) : closeSheet();
+  $('fSave').onclick = ()=>{
+    const title = $('fTitle').value.trim();
+    if(!title){ $('fTitle').focus(); toast('Geef je idee een titel'); return; }
+    const data = { title, text:$('fText').value.trim(), cat:fc, status:fs, rating:fr,
+      tags:$('fTags').value.split(',').map(t=>t.trim().replace(/^#/,'')).filter(Boolean), updated:Date.now() };
+    if(id){ Object.assign(i,data); save(); toast('Opgeslagen ✓'); openDetail(id); }
+    else { const n={id:uid(),created:Date.now(),fav:false,steps:[],...data}; ideas.unshift(n); save(); toast('Idee in de vault 🔐'); closeSheet(); }
+  };
+  if(!id) setTimeout(()=>$('fTitle').focus(),250);
+}
+
+/* detail */
+function openDetail(id){
+  const i = ideas.find(x=>x.id===id); if(!i) return closeSheet();
+  const c = cat(i.cat), s = st(i.status);
+  openSheet(`
+    <div class="dhead">
+      <h2>${esc(i.title)}</h2>
+      <button class="fav ${i.fav?'on':''}" style="position:static" id="dFav">⭐</button>
+    </div>
+    <div class="meta">
+      <span class="tag" style="background:${c.c}22;color:${c.c}">${c.e} ${c.n}</span>
+      <span class="tag">${s.e} ${s.n}</span>
+      ${i.rating?`<span class="stars" style="margin-left:0">${'★'.repeat(i.rating)}${'☆'.repeat(5-i.rating)}</span>`:''}
+    </div>
+    ${(i.tags||[]).length?`<div class="meta">${i.tags.map(t=>`<span class="tag">#${esc(t)}</span>`).join('')}</div>`:''}
+    ${i.text?`<p class="dtext">${esc(i.text)}</p>`:''}
+
+    <label>Snel status wijzigen</label>
+    <div class="pick" id="dStatus">${STATUS.map(x=>`<button data-v="${x.id}" class="${x.id===i.status?'on':''}">${x.e} ${x.n}</button>`).join('')}</div>
+
+    <label>Volgende stappen</label>
+    <div class="steps" id="dSteps">${(i.steps||[]).map((x,k)=>`
+      <div class="step ${x.d?'done':''}">
+        <input type="checkbox" data-k="${k}" ${x.d?'checked':''}>
+        <span>${esc(x.t)}</span>
+        <button data-del="${k}" aria-label="Verwijder">×</button>
+      </div>`).join('') || '<div class="small" style="margin:0">Nog geen stappen. Wat is het eerste wat je kunt doen?</div>'}</div>
+    <div class="addstep">
+      <input class="field" id="dNew" placeholder="Nieuwe stap…">
+      <button id="dAdd">＋</button>
+    </div>
+
+    <div class="small">Toegevoegd op ${fmtDate(i.created)}${i.updated&&i.updated!==i.created?` · bewerkt ${fmtDate(i.updated)}`:''}</div>
+    <div class="row">
+      <button class="btn del" id="dDel">🗑️</button>
+      <button class="btn" id="dShare">📤 Delen</button>
+      <button class="btn pri" id="dEdit">✏️ Bewerken</button>
+    </div>`);
+
+  $('dFav').onclick = ()=>{ i.fav=!i.fav; save(); $('dFav').classList.toggle('on',i.fav); };
+  $('dStatus').onclick = e=>{ const b=e.target.closest('button'); if(!b)return;
+    i.status=b.dataset.v; i.updated=Date.now(); save(); toast(`${st(i.status).e} ${st(i.status).n}`); openDetail(id); };
+  $('dSteps').onclick = e=>{
+    if(e.target.dataset.k!==undefined){ i.steps[+e.target.dataset.k].d = e.target.checked; save(); openDetail(id); }
+    if(e.target.dataset.del!==undefined){ i.steps.splice(+e.target.dataset.del,1); save(); openDetail(id); }
+  };
+  const addStep = ()=>{ const t=$('dNew').value.trim(); if(!t) return;
+    (i.steps=i.steps||[]).push({t,d:false}); save(); openDetail(id); setTimeout(()=>$('dNew').focus(),50); };
+  $('dAdd').onclick = addStep;
+  $('dNew').onkeydown = e=>{ if(e.key==='Enter') addStep(); };
+  $('dEdit').onclick = ()=> openForm(id);
+  $('dDel').onclick = ()=>{ if(confirm(`"${i.title}" verwijderen?`)){ ideas=ideas.filter(x=>x.id!==id); save(); toast('Verwijderd'); closeSheet(); } };
+  $('dShare').onclick = async ()=>{
+    const txt = `💡 ${i.title}\n${i.text?'\n'+i.text+'\n':''}\nCategorie: ${c.n} · Status: ${s.n}`+
+      ((i.steps||[]).length?`\n\nStappen:\n`+i.steps.map(x=>`${x.d?'✅':'⬜'} ${x.t}`).join('\n'):'');
+    try{ if(navigator.share){ await navigator.share({title:i.title,text:txt}); return; } }catch(e){ return; }
+    try{ await navigator.clipboard.writeText(txt); toast('Gekopieerd 📋'); }catch(e){ toast('Delen lukte niet'); }
+  };
+}
+
+/* random */
+function randomIdea(){
+  const pool = ideas.filter(i=>i.status==='idee'||i.status==='geparkeerd');
+  const from = pool.length ? pool : ideas;
+  if(!from.length){ toast('Voeg eerst een idee toe'); return; }
+  const r = from[Math.floor(Math.random()*from.length)];
+  toast('🎲 Pak deze eens op!'); openDetail(r.id);
+}
+
+/* menu: backup */
+function openMenu(){
+  openSheet(`
+    <h2>⚙️ Vault</h2>
+    <div class="menu">
+      <button id="mExport">💾 Back-up downloaden (.json)</button>
+      <button id="mImport">📥 Back-up terugzetten</button>
+      <button id="mWipe" style="color:var(--red)">🗑️ Alles wissen</button>
+    </div>
+    <div class="small">Je ideeën worden alleen op dit apparaat opgeslagen, in deze browser. Maak af en toe een back-up, zeker voordat je je browsergegevens wist of van telefoon wisselt.</div>
+    <div class="row"><button class="btn" id="mClose">Sluiten</button></div>`);
+  $('mClose').onclick = closeSheet;
+  $('mExport').onclick = ()=>{
+    const blob = new Blob([JSON.stringify({app:'ideeen-vault',v:1,exported:Date.now(),ideas},null,2)],{type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `ideeen-vault-${new Date().toISOString().slice(0,10)}.json`; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000); toast('Back-up gemaakt 💾');
+  };
+  $('mImport').onclick = ()=> $('importFile').click();
+  $('mWipe').onclick = ()=>{ if(ideas.length && confirm('Echt ALLE ideeën wissen? Dit kan niet ongedaan worden.')){ ideas=[]; save(); toast('Vault geleegd'); closeSheet(); } };
+}
+$('importFile').onchange = e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = ()=>{
+    try{
+      const d = JSON.parse(rd.result); const arr = Array.isArray(d)?d:d.ideas;
+      if(!Array.isArray(arr)) throw 0;
+      const have = new Set(ideas.map(i=>i.id)); let n=0;
+      arr.forEach(i=>{ if(i && i.title && !have.has(i.id)){ ideas.push({steps:[],tags:[],rating:0,fav:false,status:'idee',cat:'overig',created:Date.now(),...i,id:i.id||uid()}); n++; } });
+      save(); toast(`${n} idee${n===1?'':'ën'} toegevoegd`); closeSheet();
+    }catch(err){ toast('⚠️ Ongeldig back-upbestand'); }
+    e.target.value='';
+  };
+  rd.readAsText(f);
+};
+
+/* events */
+$('addBtn').onclick = ()=> openForm();
+$('rndBtn').onclick = randomIdea;
+$('menuBtn').onclick = openMenu;
+$('q').oninput = render;
+$('sort').onchange = render;
+document.addEventListener('click', e=>{
+  const t = e.target;
+  if(t.dataset.s){ fStatus=t.dataset.s; render(); return; }
+  if(t.dataset.c){ fCat=t.dataset.c; render(); return; }
+  if(t.dataset.fav){ fFav=!fFav; render(); return; }
+  if(t.dataset.favid){ const i=ideas.find(x=>x.id===t.dataset.favid); i.fav=!i.fav; save(); render(); return; }
+  const card = t.closest('[data-open]'); if(card) openDetail(card.dataset.open);
+});
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeSheet(); });
+
+render();
+</script>
+</body>
+</html>
